@@ -3,6 +3,7 @@ import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TeamsModule } from './teams/teams.module';
 import { CharactersModule } from './characters/characters.module';
@@ -18,15 +19,18 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     isGlobal: true,
     }),
 
-    TypeOrmModule.forRoot({
-    type: 'postgres',
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    autoLoadEntities: true,
-    synchronize: false,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres' as const,
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT', 5433),
+        username: configService.get<string>('DB_USER'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: false,
+      }),
     }),
 
     ObserveModule.forRoot({
